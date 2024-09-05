@@ -1,7 +1,6 @@
-﻿namespace AzureDevOpsTestConnector.DTOs
+﻿namespace AzureDevOpsTestConnector.DTOs;
+
+public class AzureTestCaseDto
 {
-    public class AzureTestCaseDto
-    {
-        
-    }
+    
 }

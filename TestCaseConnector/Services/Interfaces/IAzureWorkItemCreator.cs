@@ -1,14 +1,13 @@
 ﻿using AzureDevOpsTestConnector.DTOs;
 
-namespace AzureDevOpsTestConnector.Services.Interfaces
+namespace AzureDevOpsTestConnector.Services.Interfaces;
+
+public interface IAzureWorkItemCreator
 {
-    public interface IAzureWorkItemCreator
-    {
-        int CreateNewTestPlan(string patToken, string azureDevOpsUrl, string projectName, string testPlanName);
+    int CreateNewTestPlan(string patToken, string azureDevOpsUrl, string projectName, string testPlanName);
 
-        int CreateNewTestSuite(string patToken, string azureDevOpsUrl, string projectName, string testSuiteName,
-            int testPlanId, string testSuiteReqLinkIds);
+    int CreateNewTestSuite(string patToken, string azureDevOpsUrl, string projectName, string testSuiteName,
+        int testPlanId, string testSuiteReqLinkIds);
 
-        string CreateOrUpdateTestCase(WorkItemCreatorTestCaseData wICTestData);
-    }
+    string CreateOrUpdateTestCase(WorkItemCreatorTestCaseData wICTestData);
 }
