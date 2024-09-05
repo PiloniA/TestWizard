@@ -1,10 +1,5 @@
 ﻿using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using System;
-using System.Globalization;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 using AzureDevOpsTestConnector.DTOs;
 using System.Collections.Generic;
@@ -19,7 +14,7 @@ using AzureDevOpsTestConnector.Services.DiService;
 using EnvDTE;
 using System.ComponentModel.Design;
 
-namespace ADOTestConnector64
+namespace TestWizard
 {
     /// <summary>
     /// Command handler
@@ -41,14 +36,14 @@ namespace ADOTestConnector64
         /// </summary>
         private readonly AsyncPackage package;
 
-        private ADOTestConnector64Package _options;
+        private TestWizardPackage _options;
         private AdoUploadData _adoData;
         private ConfigurationData _configData;
         private RuntimeData _runData;
         private List<string> _testFileLines;
         private List<TestCaseData> _tests;
 
-        private static IAzureWorkItemCreator _workItemCreator => (IAzureWorkItemCreator) DependencyContainer.ServiceProvider.GetService(typeof(IAzureWorkItemCreator));
+        private static IAzureWorkItemCreator _workItemCreator => (IAzureWorkItemCreator)DependencyContainer.ServiceProvider.GetService(typeof(IAzureWorkItemCreator));
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FirstCommand"/> class.
@@ -110,7 +105,7 @@ namespace ADOTestConnector64
         private void Execute(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            _options = this.package as ADOTestConnector64Package;
+            _options = this.package as TestWizardPackage;
             _adoData = new AdoUploadData(_options);
             _configData = new ConfigurationData(_options);
             _runData = new RuntimeData();
@@ -131,6 +126,7 @@ namespace ADOTestConnector64
                 _configData.TestPlanPattern = new TagPattern(_configData.ClassTestPlanAttributePattern);
                 _configData.TestSuitePattern = new TagPattern(_configData.ClassTestSuiteAttributePattern);
                 _configData.TestCasePattern = new TagPattern(_configData.ClassTestCaseAttributePattern);
+                _configData.ParentUserStoryPattern = new TagPattern(_configData.ClassParentUserStoryAttributePattern);
             }
 
 
@@ -166,7 +162,7 @@ namespace ADOTestConnector64
                 }
                 else
                 {
-                    var testCase = ScanForMsTestAndNunitTests(currentLine, i);
+                    var testCase = ScanForMsTestAndNunitAndXunitTests(currentLine, i);
                     if (testCase != null)
                         _tests.Add(testCase);
                 }
@@ -180,17 +176,18 @@ namespace ADOTestConnector64
                 {
                     UpdateTestCaseName = _options.UpdateTestCaseTitle,
                     AzureDevopsBaseUrl = _options.AzureDevopsBaseUrl,
-                    currentNameSpace = _adoData.CurrentNameSpace,
-                    currentSolutionDllName = _adoData.CurrentSolutionDllName,
+                    CurrentNameSpace = _adoData.CurrentNameSpace,
+                    CurrentSolutionDllName = _adoData.CurrentSolutionDllName,
                     PatCode = _options.PatCode,
                     ProjectName = _options.ProjectName,
+                    TestPlanId = _options.TestPlanId,
                     ReadableTestCaseName = testCaseData.ReadableTestCaseName,
                     TestCaseMethodName = testCaseData.TestCaseName,
                     TestCaseReference = testCaseData.TestCaseId,
-                    testPlanId = _adoData.TestPlanId,
                     TestSteps = testCaseData.TestSteps,
-                    testSuiteId = _adoData.TestSuiteId,
-                    UpdateTestCaseAssociation = _configData.UpdateTestCaseAssociation
+                    TestSuiteId = _adoData.TestSuiteId,
+                    UpdateTestCaseAssociation = _configData.UpdateTestCaseAssociation,
+                    ParentUserStoryId = _adoData.ParentUserStoryId
                 };
 
                 testCaseData.TestCaseId = _workItemCreator.CreateOrUpdateTestCase(wIcTestData);
@@ -252,6 +249,21 @@ namespace ADOTestConnector64
                 _testFileLines.Insert(_runData.TestPlanAttributeLine, replacementLine);
             }
 
+            //Update Parent UserStory Reference
+            if (_runData.ParentUserStoryAttributeLine == 0)
+            {
+                //No existing Parent UserStory attribute
+                _testFileLines.Insert(_runData.ClassNameLine, $"{_configData.ParentUserStoryPattern.Prefix}{_adoData.ParentUserStoryId}{_configData.ParentUserStoryPattern.Suffix}");
+            }
+            else
+            {
+                //Update into existing Test Plan reference
+                var replacementLine = UpdateTestReference(_testFileLines.ElementAt(_runData.ParentUserStoryAttributeLine),
+                    _configData.ParentUserStoryPattern, _adoData.ParentUserStoryId);
+                _testFileLines.RemoveAt(_runData.ParentUserStoryAttributeLine);
+                _testFileLines.Insert(_runData.ParentUserStoryAttributeLine, replacementLine);
+            }
+
             //Now update original file:
             File.WriteAllLines(currentFilePath, _testFileLines);
 
@@ -271,9 +283,10 @@ namespace ADOTestConnector64
                     return true;
                 }
 
-                var testSuiteReqLinkIds = Interaction.InputBox(
-                    $"Would you like to link the new Test Suite to Requirements? If so enter the requirement ID.{Environment.NewLine}If not leave blank. e.g. 123456",
-                    "Test Suite Requirement Id", "", -1, -1);
+                var testSuiteReqLinkIds = ""; // set default ReqLinkId to "" to always use static Suites
+                    //Interaction.InputBox(
+                    //$"Would you like to link the new Test Suite to Requirements? If so enter the requirement ID.{Environment.NewLine}If not leave blank. e.g. 123456",
+                    //"Test Suite Requirement Id", "", -1, -1);
 
                 int.TryParse(testSuiteInput, out var testSuiteIdParse);
                 _adoData.TestSuiteId = testSuiteIdParse;
@@ -296,7 +309,7 @@ namespace ADOTestConnector64
             {
                 var testPlanInput = Interaction.InputBox(
                     "We need a Test Plan to link the Test Cases to, either provide an ID of an existing Test Plan, or a name of a new one",
-                    "Test Plan Id or Name", "", -1, -1);
+                    "Test Plan Id or Name", _options.TestPlanId.ToString(), -1, -1);
                 if (testPlanInput == "")
                 {
                     Interaction.MsgBox("No Test Plan input detected, no changes have been made");
@@ -347,7 +360,7 @@ namespace ADOTestConnector64
                 if (testFileLines[i].Contains(" class "))
                 {
                     _runData.ClassNameLine = i;
-                    // class found, look above for TestSuiteReference and TestPlanReference
+                    // class found, look above for TestSuiteReference and TestPlanReference and ParentUserStoryReference
                     for (int j = 1; j <= 10; j++)
                     {
                         if (i - j <= 1)
@@ -367,6 +380,12 @@ namespace ADOTestConnector64
                             _adoData.TestSuiteId = ExtractReferenceId(testFileLines[i - j], _configData.TestSuitePattern);
                             _runData.TestSuiteAttributeLine = i - j;
                         }
+
+                        if (testFileLines[i - j].Contains(_configData.ParentUserStoryPattern.Prefix) && testFileLines[i - j].Contains(_configData.ParentUserStoryPattern.Suffix))
+                        {
+                            _adoData.ParentUserStoryId = ExtractReferenceId(testFileLines[i - j], _configData.ParentUserStoryPattern);
+                            _runData.ParentUserStoryAttributeLine = i - j;
+                        }
                     }
 
                     //find current namespace in .cs file
@@ -384,7 +403,7 @@ namespace ADOTestConnector64
 
 
                     var lineWithNameSpace = testFileLines.Where(l => l.Contains("namespace ")).FirstOrDefault();
-                    _adoData.CurrentNameSpace = lineWithNameSpace.Replace("namespace ", "").Trim() + "." + classname;
+                    _adoData.CurrentNameSpace = lineWithNameSpace.Replace("namespace ", "").Replace(";", "").Trim() + "." + classname;
 
                     break;
                 }
@@ -432,12 +451,21 @@ namespace ADOTestConnector64
                     "Association Dll Name", solutionProjectName, -1, -1);
             _options.AssociationDllName = _adoData.CurrentSolutionDllName;
 
-            //Double check automation namespace
-            if (_configData.UpdateTestCaseAssociation)
-                _adoData.CurrentNameSpace = Interaction.InputBox("Please validate the Automated Test Name association namespace you want to associate the tests with in ADO, please leave blank if you wish no association to be made",
-                    "Association Name Space, NOTE: If using specflow the format of this must be: NameSpace+FeatureName+'Feature'", _adoData.CurrentNameSpace, -1, -1);
+            //Double check TestPlanId
+            _adoData.TestPlanId = int.Parse(Interaction.InputBox("Please enter the Azure Devops Test Plan ID you want the Test Case created in",
+                "Test Plan Id", _adoData.TestPlanId.ToString(), -1, -1));
+            _options.TestPlanId = _adoData.TestPlanId;
 
-            _options.CurrentNameSpace = _adoData.CurrentNameSpace;
+            //Double check Parent User Story
+            _adoData.ParentUserStoryId = int.Parse(Interaction.InputBox("Please enter the ID of the Userstory this Test Case should be linked to",
+                "Parent User Story ID", _adoData.ParentUserStoryId.ToString(), -1, -1));
+
+            ////Double check automation namespace
+            //if (_configData.UpdateTestCaseAssociation)
+            //    _adoData.CurrentNameSpace = Interaction.InputBox("Please validate the Automated Test Name association namespace you want to associate the tests with in ADO, please leave blank if you wish no association to be made",
+            //        "Association Name Space, NOTE: If using specflow the format of this must be: NameSpace+FeatureName+'Feature'", _adoData.CurrentNameSpace, -1, -1);
+
+            //_options.CurrentNameSpace = _adoData.CurrentNameSpace;
         }
 
         private string HeaderValuePairToString(Dictionary<string, List<string>> headerValuePairs, int index)
@@ -583,6 +611,7 @@ namespace ADOTestConnector64
         {
             List<string> knownTestTags = new List<string>
             {
+                "Fact",
                 "Test",
                 "TestMethod",
                 "DataTestMethod"
@@ -613,7 +642,7 @@ namespace ADOTestConnector64
             return methodName;
         }
 
-        private TestCaseData ScanForMsTestAndNunitTests(string currentLine, int currentLineInFile)
+        private TestCaseData ScanForMsTestAndNunitAndXunitTests(string currentLine, int currentLineInFile)
         {
             if (DoesLineHaveKnownTestTag(currentLine))
             {
@@ -632,7 +661,7 @@ namespace ADOTestConnector64
                     {
                         //Find Method Name and any existing methodTestCaseIds
                         var methodName = ExtractMethodName(currentLine);
-                        var readableMethodName = TitleCaseToHuman(methodName);
+                        var readableMethodName = methodName; // TitleCaseToHuman(methodName);
                         var methodTestCaseId = "";
                         var testCaseSignatureIndex = j;
                         var testReferenceIndex = 0;

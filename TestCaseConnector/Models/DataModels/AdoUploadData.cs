@@ -1,18 +1,14 @@
-﻿using ADOTestConnector64;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using TestWizard;
 
 namespace AzureDevOpsTestConnector.Models
 {
     public class AdoUploadData
     {
-        public AdoUploadData(ADOTestConnector64Package options)
+        public AdoUploadData(TestWizardPackage options)
         {
             CurrentProjectName = options.ProjectName;
             CurrentSolutionDllName = options.AssociationDllName;
+            TestPlanId = options.TestPlanId;
             CurrentNameSpace = "";
         }
 
@@ -21,5 +17,6 @@ namespace AzureDevOpsTestConnector.Models
         public string CurrentNameSpace { get; internal set; }
         public int TestPlanId { get; internal set; }
         public int TestSuiteId { get; internal set; }
+        public int ParentUserStoryId { get; set; }
     }
 }

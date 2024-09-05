@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Task = System.Threading.Tasks.Task;
 
-namespace ADOTestConnector64
+namespace TestWizard
 {
     /// <summary>
     /// This is the class that implements the package exposed by this assembly.
@@ -25,14 +25,14 @@ namespace ADOTestConnector64
     /// </para>
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [Guid(ADOTestConnector64Package.PackageGuidString)]
+    [Guid(TestWizardPackage.PackageGuidString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideOptionPage(typeof(OptionPageGrid),
         "AzureDevops Test Connector", "Settings", 0, 0, true)]
-    public sealed class ADOTestConnector64Package : AsyncPackage
+    public sealed class TestWizardPackage : AsyncPackage
     {
         /// <summary>
-        /// ADOTestConnector64Package GUID string.
+        /// TestWizardPackage GUID string.
         /// </summary>
         public const string PackageGuidString = "9f223846-a452-42ca-afd9-85890e2c4b4f";
 
@@ -127,6 +127,24 @@ namespace ADOTestConnector64
             }
         }
 
+        public string FeatureParentUserStoryAttributePattern
+        {
+            get
+            {
+                OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+                return page.FeatureParentUserStoryAttributePattern;
+            }
+        }
+
+        public string ClassParentUserStoryAttributePattern
+        {
+            get
+            {
+                OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+                return page.ClassParentUserStoryAttributePattern;
+            }
+        }
+
         public bool UpdateSpecFlowSteps
         {
             get
@@ -174,6 +192,21 @@ namespace ADOTestConnector64
             {
                 OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
                 page.ProjectName = value;
+                page.SaveSettingsToStorage();
+            }
+        }
+
+        public int TestPlanId
+        {
+            get
+            {
+                OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+                return page.TestPlanId;
+            }
+            set
+            {
+                OptionPageGrid page = (OptionPageGrid)GetDialogPage(typeof(OptionPageGrid));
+                page.TestPlanId = value;
                 page.SaveSettingsToStorage();
             }
         }
@@ -226,6 +259,12 @@ namespace ADOTestConnector64
         public string ProjectName { get; set; } = "ProjectFoo";
 
         [Category("Integration Settings")]
+        [DisplayName("Test Plan ID")]
+        [Description(
+            "The ID of the Test Plan you are using")]
+        public int TestPlanId { get; set; } = -1;
+
+        [Category("Integration Settings")]
         [DisplayName("PAT Code")]
         [Description("An authorised PAT (unencrypted) to access Azure Devops")]
         public string PatToken { get; set; } = "LargePatTokenString";
@@ -259,6 +298,16 @@ namespace ADOTestConnector64
         [DisplayName("Feature Test Case Attribute Pattern")]
         [Description("(Specflow) A Method level attribute to define an Azure Devops Test Case Id to link the tests to. The Ado ID will replace the '~' character e.g. #TestCaseId(~)")]
         public string FeatureTestCaseAttributePattern { get; set; } = "#TestCaseReference(~)";
+
+        [Category("Labelling Settings")]
+        [DisplayName("Class Parent User Story Attribute Pattern")]
+        [Description("A Method level attribute to define an Azure Devops Test Case Id to link the tests to. The Ado ID will replace the '~' character e.g. //UserStoryId(~)")]
+        public string ClassParentUserStoryAttributePattern { get; set; } = "//ParentUserStoryReference(~)";
+
+        [Category("Labelling Settings")]
+        [DisplayName("Feature Parent User Story Attribute Pattern")]
+        [Description("(Specflow) A Method level attribute to define an Azure Devops Test Case Id to link the tests to. The Ado ID will replace the '~' character e.g. #UserStoryId(~)")]
+        public string FeatureParentUserStoryAttributePattern { get; set; } = "#ParentUserStoryReference(~)";
 
         [Category("Labelling Settings")]
         [DisplayName("Update Specflow steps in Test Cases?")]

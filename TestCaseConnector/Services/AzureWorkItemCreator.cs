@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Net;
 using System.Text.RegularExpressions;
 using AzureDevOpsTestConnector.DTOs;
 using AzureDevOpsTestConnector.Services.Interfaces;
@@ -32,6 +30,11 @@ namespace AzureDevOpsTestConnector.Services
             }
 
             AddTestCaseToTestSuite(wICTestData);
+            if (wICTestData.ParentUserStoryId > 0)
+            {
+                LinkTestCaseToUserStory(wICTestData, wICTestData.ParentUserStoryId);
+            }
+            UpdateTestCaseState(wICTestData);
             return wICTestData.TestCaseReference;
         }
 
@@ -115,8 +118,8 @@ namespace AzureDevOpsTestConnector.Services
 
             string associationBodyText = "";
             if (wICTestData.UpdateTestCaseAssociation)
-                associationBodyText = string.IsNullOrEmpty(wICTestData.currentSolutionDllName) ? "" :
-                $"{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestName\",\"value\": \"{EscapeJsonCharacters(wICTestData.currentNameSpace)}.{EscapeJsonCharacters(methodName.Replace(" ", ""))}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestStorage\",\"value\": \"{EscapeJsonCharacters(wICTestData.currentSolutionDllName)}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestId\",\"value\": \"{Guid.NewGuid()}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestType\",\"value\": \"Unit Test\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomationStatus\",\"value\": \"Automated\"}},";
+                associationBodyText = string.IsNullOrEmpty(wICTestData.CurrentSolutionDllName) ? "" :
+                $"{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestName\",\"value\": \"{EscapeJsonCharacters(wICTestData.CurrentNameSpace)}.{EscapeJsonCharacters(methodName.Replace(" ", ""))}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestStorage\",\"value\": \"{EscapeJsonCharacters(wICTestData.CurrentSolutionDllName)}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestId\",\"value\": \"{Guid.NewGuid()}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestType\",\"value\": \"Unit Test\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomationStatus\",\"value\": \"Automated\"}},";
 
             var testCaseTitleCorrectLength = wICTestData.ReadableTestCaseName.Length > 128 ? EscapeJsonCharacters(wICTestData.ReadableTestCaseName).Substring(0, 128) : EscapeJsonCharacters(wICTestData.ReadableTestCaseName);
             _apiCaller.AddRequestBodyText($"[{associationBodyText}{{\"op\": \"add\",\"path\": \"/fields/System.Title\",\"from\": null,\"value\": \"{testCaseTitleCorrectLength}\"}}]");
@@ -164,8 +167,6 @@ namespace AzureDevOpsTestConnector.Services
             return wICTestData.TestCaseReference;
         }
 
-        
-
         private string UpdateTestCase(WorkItemCreatorTestCaseData wICTestData)
         {
             var hashedToken = _encoder.EncodeString($"{wICTestData.PatCode}");
@@ -181,9 +182,7 @@ namespace AzureDevOpsTestConnector.Services
 
             var methodName = Regex.Replace(wICTestData.TestCaseMethodName, @"(^\w)|(\s\w)", m => m.Value.ToUpper()); //replace first letters with capitals
 
-
             List<string> updateOperations = new List<string>();
-
 
             string testCaseTitleUpdate = "";
             if (wICTestData.UpdateTestCaseName)
@@ -196,13 +195,10 @@ namespace AzureDevOpsTestConnector.Services
             string associationBodyText = "";
             if (wICTestData.UpdateTestCaseAssociation)
             {
-                associationBodyText = string.IsNullOrEmpty(wICTestData.currentSolutionDllName) ? "" :
-                    $"{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestName\",\"value\": \"{EscapeJsonCharacters(wICTestData.currentNameSpace)}.{EscapeJsonCharacters(methodName.Replace(" ", ""))}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestStorage\",\"value\": \"{EscapeJsonCharacters(wICTestData.currentSolutionDllName)}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestId\",\"value\": \"{Guid.NewGuid()}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestType\",\"value\": \"Unit Test\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomationStatus\",\"value\": \"Automated\"}}";
+                associationBodyText = string.IsNullOrEmpty(wICTestData.CurrentSolutionDllName) ? "" :
+                    $"{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestName\",\"value\": \"{EscapeJsonCharacters(wICTestData.CurrentNameSpace)}.{EscapeJsonCharacters(methodName.Replace(" ", ""))}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestStorage\",\"value\": \"{EscapeJsonCharacters(wICTestData.CurrentSolutionDllName)}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestId\",\"value\": \"{Guid.NewGuid()}\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomatedTestType\",\"value\": \"Unit Test\"}},{{\"op\": \"add\",\"path\": \"/fields/Microsoft.VSTS.TCM.AutomationStatus\",\"value\": \"Automated\"}}";
                 updateOperations.Add(associationBodyText);
             }
-            
-
-            
 
             _apiCaller.AddRequestBodyText($"[{string.Join(",", updateOperations)}]");
 
@@ -253,7 +249,7 @@ namespace AzureDevOpsTestConnector.Services
         {
             var hashedToken = _encoder.EncodeString($"{wICTestData.PatCode}");
 
-            _apiCaller.SetUpClient($"{wICTestData.AzureDevopsBaseUrl}/{wICTestData.ProjectName}/_apis/test/Plans/{wICTestData.testPlanId}/suites/{wICTestData.testSuiteId}/testcases/{wICTestData.TestCaseReference}?api-version=5.1");
+            _apiCaller.SetUpClient($"{wICTestData.AzureDevopsBaseUrl}/{wICTestData.ProjectName}/_apis/test/Plans/{wICTestData.TestPlanId}/suites/{wICTestData.TestSuiteId}/testcases/{wICTestData.TestCaseReference}?api-version=5.1");
 
             _apiCaller.SetUpRequestHeaders(new Dictionary<string, string>
             {
@@ -265,6 +261,52 @@ namespace AzureDevOpsTestConnector.Services
             if (!result.IsSuccessful && !result.Content.Contains("Duplicate"))
             {
                 throw new Exception($"Unable to add test cases to the test suite, please check your settings{Environment.NewLine}Status Code:{result.StatusCode}(Hint: if 203 check your PAT settings!){Environment.NewLine}Content Message:{result.Content}");
+            }
+        }
+
+        private void LinkTestCaseToUserStory(WorkItemCreatorTestCaseData wICTestData, int userStoryId)
+        {
+            var hashedToken = _encoder.EncodeString($"{wICTestData.PatCode}");
+
+            _apiCaller.SetUpClient($"{wICTestData.AzureDevopsBaseUrl}/{wICTestData.ProjectName}/_apis/wit/workitems/{wICTestData.TestCaseReference}?api-version=5.1");
+
+            _apiCaller.SetUpRequestHeaders(new Dictionary<string, string>
+            {
+                {"Authorization",$"Basic {hashedToken}" },
+                {"Content-Type", "application/json-patch+json" }
+            });
+
+            var requestBody = $"[{{\"op\": \"add\",\"path\": \"/relations/-\",\"value\": {{\"rel\": \"Microsoft.VSTS.Common.TestedBy-Reverse\",\"url\": \"{wICTestData.AzureDevopsBaseUrl}/{wICTestData.ProjectName}/_apis/wit/workitems/{userStoryId}\"}}}}]";
+
+            _apiCaller.AddRequestBodyText(requestBody);
+
+            var result = _apiCaller.PerformApiPatchRequest();
+
+            if (!result.IsSuccessful)
+            {
+                throw new Exception($"Unable to link Test Case to User Story, please check your settings{Environment.NewLine}Status Code:{result.StatusCode}(Hint: if 203 check your PAT settings!){Environment.NewLine}Content Message:{result.Content}");
+            }
+        }
+
+        private void UpdateTestCaseState(WorkItemCreatorTestCaseData wICTestData)
+        {
+            var hashedToken = _encoder.EncodeString($"{wICTestData.PatCode}");
+
+            _apiCaller.SetUpClient($"{wICTestData.AzureDevopsBaseUrl}/{wICTestData.ProjectName}/_apis/wit/workitems/{wICTestData.TestCaseReference}?api-version=5.1");
+
+            _apiCaller.SetUpRequestHeaders(new Dictionary<string, string>
+            {
+                {"Authorization",$"Basic {hashedToken}" },
+                {"Content-Type", "application/json-patch+json" }
+            });
+
+            _apiCaller.AddRequestBodyText("[{\"op\": \"add\",\"path\": \"/fields/System.State\",\"value\": \"Ready\"}]");
+
+            var result = _apiCaller.PerformApiPatchRequest();
+
+            if (!result.IsSuccessful)
+            {
+                throw new Exception($"Unable to update Test Case state, please check your settings{Environment.NewLine}Status Code:{result.StatusCode}(Hint: if 203 check your PAT settings!){Environment.NewLine}Content Message:{result.Content}");
             }
         }
 

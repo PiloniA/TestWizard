@@ -1,4 +1,4 @@
-﻿using ADOTestConnector64;
+﻿using TestWizard;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace AzureDevOpsTestConnector.Models
 {
     public class ConfigurationData
     {
-        public ConfigurationData(ADOTestConnector64Package options)
+        public ConfigurationData(TestWizardPackage options)
         {
             ClassTestPlanAttributePattern = options.ClassTestPlanAttributePattern;
             FeatureTestPlanAttributePattern = options.FeatureTestPlanAttributePattern;
@@ -18,6 +18,8 @@ namespace AzureDevOpsTestConnector.Models
             FeatureTestSuiteAttributePattern = options.FeatureTestSuiteAttributePattern;
             ClassTestCaseAttributePattern = options.ClassTestCaseAttributePattern;
             FeatureTestCaseAttributePattern = options.FeatureTestCaseAttributePattern;
+            ClassParentUserStoryAttributePattern = options.ClassParentUserStoryAttributePattern;
+            FeatureParentUserStoryAttributePattern = options.FeatureParentUserStoryAttributePattern;
 
             UpdateSpecFlowSteps = options.UpdateSpecFlowSteps;
             SeparateSpecFlowExamples = options.SeperateSpecFlowExamples;
@@ -35,6 +37,10 @@ namespace AzureDevOpsTestConnector.Models
         public string FeatureTestCaseAttributePattern { get; }
         public string ClassTestCaseAttributePattern { get; set; }
         public TagPattern TestCasePattern { get; set; }
+
+        public string FeatureParentUserStoryAttributePattern { get; }
+        public string ClassParentUserStoryAttributePattern { get; set; }
+        public TagPattern ParentUserStoryPattern { get; set; }
 
         public bool UpdateSpecFlowSteps { get; set; }
         public bool SeparateSpecFlowExamples { get; set; }
