@@ -41,7 +41,7 @@ internal sealed class FirstCommand
     private ConfigurationData _configData;
     private RuntimeData _runData;
     private List<string> _testFileLines;
-    private List<TestCaseData> _tests;
+    private List<AzureTestCaseDto> _tests;
 
     private static IAzureWorkItemCreator _workItemCreator => (IAzureWorkItemCreator)DependencyContainer.ServiceProvider.GetService(typeof(IAzureWorkItemCreator));
 
@@ -109,7 +109,7 @@ internal sealed class FirstCommand
         _adoData = new AdoUploadData(_options);
         _configData = new ConfigurationData(_options);
         _runData = new RuntimeData();
-        _tests = new List<TestCaseData>();
+        _tests = new List<AzureTestCaseDto>();
         DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
         var currentFilePath = dte.ActiveDocument.FullName;
 
@@ -642,7 +642,7 @@ internal sealed class FirstCommand
         return methodName;
     }
 
-    private TestCaseData ScanForMsTestAndNunitAndXunitTests(string currentLine, int currentLineInFile)
+    private AzureTestCaseDto ScanForMsTestAndNunitAndXunitTests(string currentLine, int currentLineInFile)
     {
         if (DoesLineHaveKnownTestTag(currentLine))
         {
@@ -681,7 +681,7 @@ internal sealed class FirstCommand
                         previousLineIndex -= 1;
                     } while (!currentLine.Contains("}") && !currentLine.Contains("{") && previousLineIndex > 1 && methodTestCaseId == "");
 
-                    return new TestCaseData
+                    return new AzureTestCaseDto
                     {
                         TestCaseName = methodName,
                         ReadableTestCaseName = readableMethodName,
@@ -697,9 +697,9 @@ internal sealed class FirstCommand
         return null;
     }
 
-    private List<TestCaseData> ScanForSpecflowScenarios(string currentLine, int currentLineInFile)
+    private List<AzureTestCaseDto> ScanForSpecflowScenarios(string currentLine, int currentLineInFile)
     {
-        var testCases = new List<TestCaseData>();
+        var testCases = new List<AzureTestCaseDto>();
         //See if line contains the start of a scenario
         if (currentLine.Contains("Scenario:") || currentLine.Contains("Scenario Outline:") && !currentLine.Contains("#"))
         {
@@ -833,7 +833,7 @@ internal sealed class FirstCommand
 
                     //add enhanced tests to test case data
 
-                    testCases.Add(new TestCaseData
+                    testCases.Add(new AzureTestCaseDto
                     {
                         TestCaseName = enhancedMethodName,
                         ReadableTestCaseName = readableMethodName,
@@ -847,7 +847,7 @@ internal sealed class FirstCommand
             }
             else
             {
-                testCases.Add(new TestCaseData
+                testCases.Add(new AzureTestCaseDto
                 {
                     TestCaseName = methodName,
                     ReadableTestCaseName = readableMethodName,

@@ -6,8 +6,8 @@
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup>
-   <LangVersion>12</LangVersion>
-</PropertyGroup>
+    <LangVersion>12</LangVersion>
+  </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -50,11 +50,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FirstCommand.cs" />
-    <Compile Include="Models\AzureTestCaseDto.cs" />
     <Compile Include="Models\DataModels\AdoUploadData.cs" />
     <Compile Include="Models\DataModels\ConfigurationData.cs" />
     <Compile Include="Models\DataModels\RuntimeData.cs" />
-    <Compile Include="Models\TestCaseData.cs" />
+    <Compile Include="Models\AzureTestCaseDto.cs" />
     <Compile Include="Models\WorkItemCreatorTestCaseData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestWizardPackage.cs" />

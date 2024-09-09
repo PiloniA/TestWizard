@@ -1,6 +1,14 @@
-﻿namespace AzureDevOpsTestConnector.DTOs;
+﻿using System.Collections.Generic;
 
-public class AzureTestCaseDto
+namespace AzureDevOpsTestConnector.DTOs;
+
+class AzureTestCaseDto
 {
-    
+    public string TestCaseName { get; set; }
+    public string ReadableTestCaseName { get; set; }
+    public int TestCaseSignatureIndex { get; set; }
+    public string TestCaseId { get; set; }
+    public int ExistingTestCaseReferenceIndex { get; set; }
+    public string WhiteSpace { get; set; }
+    public List<string> TestSteps { get; set; }
 }
