@@ -3,6 +3,10 @@
   <PropertyGroup>
     <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>12</LangVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -15,7 +19,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>TestWizard</RootNamespace>
     <AssemblyName>TestWizard</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
     <UseCodebase>true</UseCodebase>
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
@@ -46,11 +50,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FirstCommand.cs" />
-    <Compile Include="Models\AzureTestCaseDto.cs" />
     <Compile Include="Models\DataModels\AdoUploadData.cs" />
     <Compile Include="Models\DataModels\ConfigurationData.cs" />
     <Compile Include="Models\DataModels\RuntimeData.cs" />
-    <Compile Include="Models\TestCaseData.cs" />
+    <Compile Include="Models\AzureTestCaseDto.cs" />
     <Compile Include="Models\WorkItemCreatorTestCaseData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestWizardPackage.cs" />

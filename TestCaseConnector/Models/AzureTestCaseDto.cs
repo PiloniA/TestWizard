@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace AzureDevOpsTestConnector.DTOs
+namespace AzureDevOpsTestConnector.DTOs;
+
+class AzureTestCaseDto
 {
-    public class AzureTestCaseDto
-    {
-        
-    }
+    public string TestCaseName { get; set; }
+    public string ReadableTestCaseName { get; set; }
+    public int TestCaseSignatureIndex { get; set; }
+    public string TestCaseId { get; set; }
+    public int ExistingTestCaseReferenceIndex { get; set; }
+    public string WhiteSpace { get; set; }
+    public List<string> TestSteps { get; set; }
 }
