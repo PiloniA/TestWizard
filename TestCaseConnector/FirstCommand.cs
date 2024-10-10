@@ -149,11 +149,13 @@ internal sealed class FirstCommand
 
         //Read CS test file
         _testFileLines = File.ReadAllLines(currentFilePath).ToList();
-        GetTestPlanAndTestSuiteIds(currentFilePath, _testFileLines);
+        GetTestPlanIdTestSuiteIdUserStoryId(currentFilePath, _testFileLines);
 
         if (VerifyTestPlanId()) return;
 
         if (VerifyTestSuiteDetails()) return;
+
+        if (VerifyParentUserStoryId()) return;
 
         if (_adoData.TestSuiteId == 0 || _adoData.TestSuiteId == -1)
         {
@@ -324,6 +326,8 @@ internal sealed class FirstCommand
         {
             return false;
         }
+        return false;
+    }
 
         var parentUserStoryId = Interaction.InputBox(
         "Enter the Id of the UserStory the TestCases should be linked to. Set to 0 if the TestCases should not be linked to any UserStory",
@@ -335,6 +339,7 @@ internal sealed class FirstCommand
             return true;
         }
 
+        _adoData.ParentUserStoryId = parentUserStoryIdParse;
         return false;
     }
 
@@ -365,7 +370,7 @@ internal sealed class FirstCommand
         return false;
     }
 
-    private void GetTestPlanAndTestSuiteIds(string currentFilePath, List<string> testFileLines)
+    private void GetTestPlanIdTestSuiteIdUserStoryId(string currentFilePath, List<string> testFileLines)
     {
         //find class declaration line
         for (int i = 0; i < testFileLines.Count; i++)
@@ -492,9 +497,9 @@ internal sealed class FirstCommand
             "Test Plan Id", _adoData.TestPlanId.ToString(), -1, -1));
         _options.TestPlanId = _adoData.TestPlanId;
 
-        //Double check Parent User Story
-        _adoData.ParentUserStoryId = int.Parse(Interaction.InputBox("Please enter the ID of the Userstory this Test Case should be linked to",
-            "Parent User Story ID", _adoData.ParentUserStoryId.ToString(), -1, -1));
+        ////Double check Parent User Story
+        //_adoData.ParentUserStoryId = int.Parse(Interaction.InputBox("Please enter the ID of the Userstory this Test Case should be linked to",
+        //    "Parent User Story ID", _adoData.ParentUserStoryId.ToString(), -1, -1));
 
         ////Double check automation namespace
         //if (_configData.UpdateTestCaseAssociation)

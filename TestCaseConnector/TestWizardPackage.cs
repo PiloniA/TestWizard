@@ -335,7 +335,7 @@ namespace TestWizard
         public string AssociationDllname { get; set; } = "someProject.dll";
 
         [Category("Storage")]
-        [DisplayName("Current Association Dll Name")]
+        [DisplayName("Current Association namespace")]
         [Description("A namespace used when associating tests (set during sync)")]
         public string CurrentNameSpace { get; set; } = "bigLongNameSpace";
     }
