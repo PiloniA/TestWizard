@@ -13,6 +13,7 @@ using AzureDevOpsTestConnector.Services.Interfaces;
 using AzureDevOpsTestConnector.Services.DiService;
 using EnvDTE;
 using System.ComponentModel.Design;
+using System.Windows.Forms;
 
 namespace TestWizard;
 
@@ -112,6 +113,20 @@ internal sealed class FirstCommand
         _tests = new List<AzureTestCaseDto>();
         DTE dte = (DTE)Package.GetGlobalService(typeof(DTE));
         var currentFilePath = dte.ActiveDocument.FullName;
+
+        // Check if there are unsaved changes in the current active file. if there are, open a popup to ask the user if he wants to save or not or cancel the operation
+        if (dte.ActiveDocument.Saved == false)
+        {
+            var result = MessageBox.Show("There are unsaved changes in the current file. Do you want to save the changes?", "Unsaved changes", MessageBoxButtons.YesNoCancel);
+            if (result == DialogResult.Yes)
+            {
+                dte.ActiveDocument.Save();
+            }
+            else if (result == DialogResult.Cancel)
+            {
+                return;
+            }
+        }
 
         //check if file is specflow or not
         if (currentFilePath.EndsWith(".feature"))
@@ -297,6 +312,27 @@ internal sealed class FirstCommand
                 _adoData.TestSuiteId = _workItemCreator.CreateNewTestSuite(_options.PatCode, _options.AzureDevopsBaseUrl,
                     _adoData.CurrentProjectName, testSuiteInput, _adoData.TestPlanId, testSuiteReqLinkIds);
             }
+        }
+
+        return false;
+    }
+
+    private bool VerifyParentUserStoryId()
+    {
+        //skip if already defined
+        if (_adoData.ParentUserStoryId != 0)
+        {
+            return false;
+        }
+
+        var parentUserStoryId = Interaction.InputBox(
+        "Enter the Id of the UserStory the TestCases should be linked to. Set to 0 if the TestCases should not be linked to any UserStory",
+        "Parent UserStory Id", "0", -1, -1);
+
+        if (!int.TryParse(parentUserStoryId, out var parentUserStoryIdParse) || parentUserStoryIdParse < 0)
+        {
+            Interaction.MsgBox("Invalid UserStory Id, process canceled. No action has been performed");
+            return true;
         }
 
         return false;
